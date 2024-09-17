@@ -1,0 +1,68 @@
+import random
+import matplotlib.pyplot as plt
+
+# Função para resolver equação de 2º grau com algoritmo genético
+def algoritmo_genetico(a, b, c, x_min, x_max, tamanho_populacao=100, geracoes=1000):
+    # Gerar indivíduo (solução aleatória para x dentro dos limites fornecidos)
+    def criar_individuo():
+        return random.uniform(x_min, x_max)  # Valores de x entre os limites
+
+    # Calcular fitness (quanto menor, melhor)
+    def calcular_fitness(individuo):
+        x = individuo
+        resultado = a * x**2 + b * x + c
+        return abs(resultado)  # O erro absoluto em relação a 0
+
+    # Selecionar a metade superior da população (melhores indivíduos)
+    def selecao(populacao):
+        populacao.sort(key=lambda ind: calcular_fitness(ind))
+        return populacao[:len(populacao)//2]
+
+    # Crossover com ponto de corte (média dos valores de x)
+    def crossover(pai1, pai2):
+        return (pai1 + pai2) / 2
+
+    # Mutação (pequena alteração no valor de x)
+    def mutacao(individuo, taxa_mutacao=0.1):
+        if random.random() < taxa_mutacao:
+            individuo += random.uniform(-1, 1)  # Pequena mudança no valor de x
+        return individuo
+
+    # Algoritmo genético para encontrar a solução da equação
+    populacao = [criar_individuo() for _ in range(tamanho_populacao)]
+    historico_fitness = []
+    historico_dados = []  # Lista para armazenar os dados de cada geração
+
+    for geracao in range(geracoes):
+        melhor_individuo = min(populacao, key=lambda ind: calcular_fitness(ind))
+        melhor_fitness = calcular_fitness(melhor_individuo)
+        historico_fitness.append(melhor_fitness)
+        historico_dados.append((geracao, melhor_individuo, melhor_fitness))  # Armazenando os dados
+
+        if melhor_fitness == 0:
+            print(f"Solução encontrada na geração {geracao}: x = {melhor_individuo}")
+            break
+
+        nova_populacao = selecao(populacao)
+
+        while len(nova_populacao) < tamanho_populacao:
+            pai1, pai2 = random.sample(nova_populacao, 2)
+            filho = crossover(pai1, pai2)
+            filho = mutacao(filho)
+            nova_populacao.append(filho)
+
+        populacao = nova_populacao
+
+    # Exibir dados de cada geração
+    print("\nDados por Geração:")
+    for geracao, individuo, fitness in historico_dados:
+        print(f"Geração {geracao}: Melhor indivíduo (x) = {individuo}, Fitness = {fitness}")
+
+    # Plotando o gráfico de fitness ao longo das gerações
+    plt.plot(historico_fitness)
+    plt.title('Evolução do Fitness ao Longo das Gerações')
+    plt.xlabel('Geração')
+    plt.ylabel('Fitness (Menor é melhor)')
+    plt.show()
+
+    return melhor_individuo
